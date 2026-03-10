@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小澤なぞなぞ</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#FFF8EE;
+  --card:#FFFFFF;
+  --pop:#FF6B35;
+  --pop-light:#FF8F61;
+  --pop-pale:#FFF0E6;
+  --mint:#2EC4B6;
+  --yellow:#FFD166;
+  --ink:#2D2A26;
+  --ink-sub:#7A756D;
+  --border:#F0E8DC;
+  --correct:#2EC4B6;
+  --wrong:#FF6B6B;
+}
+html{font-size:16px}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Zen Maru Gothic',sans-serif;
+  min-height:100vh;
+  line-height:1.7;
+}
+.wrap{max-width:480px;margin:0 auto;padding:48px 20px 100px}
+
+/* Header */
+.header{text-align:center;margin-bottom:32px}
+.header-emoji{font-size:2.4rem;margin-bottom:8px}
+.header-title{font-size:1.6rem;font-weight:900;color:var(--ink);letter-spacing:.05em}
+.header-date{
+  display:inline-block;
+  font-size:.72rem;font-weight:500;color:var(--pop);
+  background:var(--pop-pale);
+  padding:4px 14px;border-radius:20px;
+  margin-top:10px;letter-spacing:.08em;
+}
+
+/* Timer */
+.timer-wrap{margin-bottom:28px;text-align:center}
+.timer-bar-bg{width:100%;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.timer-bar{height:100%;background:var(--mint);transition:width 1s linear;border-radius:3px}
+.timer-bar.warn{background:var(--yellow)}
+.timer-bar.danger{background:var(--wrong);animation:pulse 1s infinite}
+.timer-text{font-size:.75rem;color:var(--ink-sub);margin-top:6px;font-weight:500;font-variant-numeric:tabular-nums}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Question Card */
+.card{
+  background:var(--card);
+  border-radius:20px;
+  padding:36px 28px;
+  margin-bottom:24px;
+  box-shadow:0 2px 20px rgba(0,0,0,.04);
+}
+.q-label{
+  font-size:.68rem;font-weight:700;color:var(--pop);
+  letter-spacing:.12em;margin-bottom:14px;
+}
+.q-text{
+  font-size:1.2rem;font-weight:700;
+  line-height:2;color:var(--ink);
+}
+
+/* Input */
+.input-wrap{display:flex;gap:10px;margin-bottom:20px}
+.text-input{
+  flex:1;border:2px solid var(--border);
+  border-radius:14px;padding:14px 18px;
+  font-size:1rem;font-family:'Zen Maru Gothic',sans-serif;
+  color:var(--ink);outline:none;transition:border-color .2s;
+  font-weight:500;
+}
+.text-input:focus{border-color:var(--pop-light)}
+.text-input::placeholder{color:#C4BDB2}
+.submit-btn{
+  background:var(--pop);color:#fff;border:none;
+  border-radius:14px;padding:14px 24px;
+  font-size:.9rem;font-weight:700;cursor:pointer;
+  font-family:'Zen Maru Gothic',sans-serif;
+  transition:background .2s;
+}
+.submit-btn:hover{background:var(--pop-light)}
+.submit-btn:disabled{background:#D4CFC7;cursor:default}
+
+/* Result */
+.result{text-align:center;padding:24px 0}
+.result-emoji{font-size:3rem;margin-bottom:8px}
+.result-label{font-size:1.4rem;font-weight:900;margin-bottom:4px}
+.result-label.ok{color:var(--correct)}
+.result-label.ng{color:var(--wrong)}
+.result-answer{
+  font-size:.88rem;color:var(--ink-sub);margin-top:10px;
+  line-height:1.8;
+}
+.result-answer strong{color:var(--ink);font-weight:700}
+.badge{
+  display:inline-block;font-size:.72rem;font-weight:700;
+  letter-spacing:.15em;padding:5px 18px;border-radius:20px;margin-top:14px;
+}
+.badge.genius{background:#E0FFF8;color:var(--mint);border:2px solid var(--mint)}
+.badge.ordinary{background:#F5F0EA;color:var(--ink-sub);border:2px solid var(--border)}
+.result-time{font-size:.72rem;color:var(--ink-sub);margin-top:8px;font-weight:500}
+
+/* Ozawa insults */
+.ozawa-stack{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  pointer-events:none;display:flex;flex-direction:column;align-items:center;
+}
+.ozawa-msg{
+  pointer-events:auto;
+  background:rgba(45,42,38,.93);
+  color:var(--yellow);
+  font-family:'Zen Maru Gothic',sans-serif;
+  font-size:.82rem;font-weight:700;
+  line-height:1.5;padding:11px 20px;margin-bottom:2px;
+  width:100%;text-align:center;
+  animation:ozIn .4s cubic-bezier(.22,1,.36,1);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+@keyframes ozIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Timeover */
+.overlay{
+  position:fixed;inset:0;background:rgba(255,248,238,.96);
+  z-index:200;display:none;justify-content:center;align-items:center;padding:20px;
+}
+.overlay.show{display:flex}
+.over-card{text-align:center;max-width:360px}
+.over-emoji{font-size:3rem;margin-bottom:12px}
+.over-title{font-size:1.1rem;color:var(--wrong);font-weight:900;letter-spacing:.1em;margin-bottom:20px}
+.over-answer{font-size:1.3rem;font-weight:900;color:var(--ink);margin-bottom:24px;line-height:1.8}
+.retry-btn{
+  background:var(--pop);color:#fff;border:none;
+  border-radius:14px;padding:14px 36px;
+  font-size:.9rem;font-weight:700;cursor:pointer;
+  font-family:'Zen Maru Gothic',sans-serif;transition:background .2s;
+}
+.retry-btn:hover{background:var(--pop-light)}
+
+@media(max-width:480px){
+  .wrap{padding:36px 16px 80px}
+  .header-title{font-size:1.4rem}
+  .q-text{font-size:1.1rem}
+  .card{padding:28px 22px;border-radius:16px}
+}
+</style>
+</head>
+<body>
+<div class="ozawa-stack" id="ozawaStack"></div>
+<div class="wrap">
+  <div class="header">
+    <div class="header-emoji">🤔</div>
+    <div class="header-title">小澤なぞなぞ</div>
+    <div class="header-date" id="dateLabel"></div>
+  </div>
+  <div class="timer-wrap">
+    <div class="timer-bar-bg"><div class="timer-bar" id="timerBar"></div></div>
+    <div class="timer-text" id="timerText">10:00</div>
+  </div>
+  <div class="card">
+    <div class="q-label">TODAY'S RIDDLE</div>
+    <div class="q-text" id="qText"></div>
+  </div>
+  <div id="answerArea"></div>
+  <div id="resultArea"></div>
+</div>
+<div class="overlay" id="overOverlay">
+  <div class="over-card">
+    <div class="over-emoji">⏰</div>
+    <div class="over-title">TIME OVER</div>
+    <div class="over-answer" id="overAnswer"></div>
+    <button class="retry-btn" onclick="init()">もう一度</button>
+  </div>
+</div>
+<script>
+const R=[
+{q:"パンはパンでも食べられないパンは？",a:"フライパン"},
+{q:"逆立ちすると軽くなる動物は？",a:"イルカ",ex:"イルカ → カルイ"},
+{q:"叩かれるのが仕事なのに関わらず全然怒らないものは？",a:"太鼓"},
+{q:"上がることはあっても絶対に下がらないものは？",a:"年齢"},
+{q:"食べる前は1本、食べた後は2本になるものは？",a:"割り箸"},
+{q:"何回拭いてもきれいにならないものは？",a:"雑巾"},
+{q:"飲むと安心する電化製品は？",a:"ホットカーペット",ex:"ほっと"},
+{q:"頭のいい魚は？",a:"鯛",ex:"たい → タイ（頭脳のタイ…ではなく「めでたい」）"},
+{q:"借りてきたときだけ静かな動物は？",a:"猫",ex:"借りてきた猫"},
+{q:"いつも怒っている花は？",a:"ゼラニウム",ex:"ゼラニウム…ではなく"},
+{q:"どんなに走っても追いつけないものは？",a:"影"},
+{q:"電車の中で一番前にいるスポーツ選手は？",a:"先頭打者",ex:"先頭"},
+{q:"切っても切っても切れないものは？",a:"水"},
+{q:"見えているのに絶対たどり着けないものは？",a:"地平線"},
+{q:"いつも近くにあるのに「遠い」と言われるものは？",a:"縁側",ex:"えんがわ→遠側"},
+{q:"春に会えて冬に会えない人は？",a:"虫",ex:"春→虫が出る"},
+{q:"逆さにすると増える魚は？",a:"イワシ",ex:"イワシ→シワイ（しわ）→増える"},
+{q:"泣いている人が使う数字は？",a:"4",ex:"シクシク…4949"},
+{q:"何度踏まれても怒らない優しいものは？",a:"地面"},
+{q:"世界の真ん中にいる虫は？",a:"蚊",ex:"せ「か」い"},
+{q:"「トンボ」を逆さに読むと？ではなく、トンボの中に隠れている動物は？",a:"トン「ボ」→豚（ブタ）…ではなく「うま」",ex:"飛ぶ→とぶ→馬"},
+{q:"冷蔵庫の中にいる動物は？",a:"象",ex:"れい「ぞう」こ"},
+{q:"最初にできた調味料は？",a:"塩",ex:"初め→はじめ→し「お」"},
+{q:"お寿司屋さんにいる蝶は？",a:"あげはちょう",ex:"あげは蝶→揚げ"},
+{q:"空から降ってくる靴は？",a:"レインブーツ",ex:"レイン＋ブーツ"},
+{q:"足が8本ある花は？",a:"チューリップ",ex:"チュー・リップ…ではなく足8本→タコ→タコ…"},
+{q:"ネズミが通る道は？",a:"近道",ex:"チュー（ネズミの鳴き声）→近（ちか）道"},
+{q:"いつも走り回っている日用品は？",a:"はしる→箸",ex:"はし→走る→箸"},
+{q:"かけても減らないものは？",a:"メガネ"},
+{q:"使えば使うほど増えるものは？",a:"言葉"},
+{q:"食べられる文房具は？",a:"クレパス",ex:"クレパス→クレープ＋パス…ではなくクレープ"},
+{q:"お母さんが絶対に負けない勝負は？",a:"しりとり",ex:"しりとり→「り」で終わる→お母さん→「ん」で負けない？→パーから始まる"},
+{q:"1000回手を叩くとできる食べ物は？",a:"千切り",ex:"せんぎり→千・切り"},
+{q:"地面に咲く電化製品は？",a:"ドライヤー",ex:"ド・ライ・ヤー→土・裸・野"},
+{q:"お風呂が大好きな季節は？",a:"秋",ex:"飽き→あき→秋、ではなく「はいる」→入る季節"},
+{q:"空を飛ぶ調味料は？",a:"ソース",ex:"空→ソーラ→ソース"},
+{q:"どんなに優しい人でも突然冷たくなる場所は？",a:"プール"},
+{q:"読まない本って何？",a:"見本",ex:"見る本→見本"},
+{q:"壁に耳をつけると聞こえてくる野菜は？",a:"キャベツ",ex:"壁→カベ→キャベツ"},
+{q:"お医者さんが一番嫌いな道具は？",a:"注射",ex:"ちゅうしゃ→駐車→医者が嫌い？"},
+{q:"お城の中にいる鳥は？",a:"しろ→白鳥",ex:"城→しろ→白→白鳥"},
+{q:"「2」を「ん」と読む遊びは？",a:"にらめっこ",ex:"2→に→にらめっこ"},
+{q:"10人乗ったら沈む船は？",a:"潜水艦",ex:"沈む＝潜る"},
+{q:"ケンカばっかりしている鳥は？",a:"カラス",ex:"カラスは「カー」って威嚇する…ではなく「からす」→殻す→怒る"},
+{q:"男の人しか使えない調味料は？",a:"味噌",ex:"み「そ」→ミスター→Mr."},
+{q:"走るとカチャカチャ音が鳴る野菜は？",a:"キー",ex:"鍵→カチャ→ではなく"},
+{q:"飛ばないのに「飛行機」と呼ばれる折り紙の作品、本当は何に一番似ている？",a:"手紙",ex:"紙を飛ばす→手紙"},
+{q:"人の言うことを絶対に聞かない部屋は？",a:"地下室",ex:"聞かしつ→聞か室"},
+{q:"会うと会費を取られる植物は？",a:"会費→アイビー",ex:"アイビー→会費ー"},
+{q:"走ると増えるものは？",a:"距離"},
+{q:"歳をとると小さくなるものは？",a:"寿命の残り"},
+{q:"赤ちゃんが持っている武器は？",a:"ハイハイ",ex:"拝→はい→刃"},
+{q:"逆立ちするとお菓子になる場所は？",a:"市場",ex:"いちば→ばちい→…ではなく"},
+{q:"必ず横になって届くものは？",a:"手紙",ex:"封筒は横"},
+{q:"畑に種をまくと育つ体の部分は？",a:"歯",ex:"は→畑→歯たけ"},
+{q:"100人乗っても大丈夫な動物は？",a:"象",ex:"イナバの物置…ではなく象は大きい"},
+{q:"お坊さんが毎日使う魚は？",a:"鯛",ex:"「お経→おきょう」→ではなく「木魚」"},
+{q:"寝るときに使う数字は？",a:"9",ex:"9→く→ぐー（寝る音）"},
+{q:"東京の真ん中にあるものは？",a:"う",ex:"と「う」きょ"},
+{q:"ひっくり返すと怒る食べ物は？",a:"プリン",ex:"プリン→ンリプ→…ではなくプッチン"},
+{q:"みんなが「すごい！」と言う犬の種類は？",a:"ポメラニアン",ex:"ではなく…"},
+{q:"お金持ちが持っている花は？",a:"お金持ち→リッチ→リッチ…",ex:""},
+{q:"鳴かない鳥は？",a:"千鳥",ex:"ちどり→千取り→千鳥足"},
+{q:"車のタイヤが4つとも全部パンクしているのに走れる車は？",a:"電車",ex:"レール走行"},
+{q:"お腹が空いている人が住んでいる県は？",a:"福井県",ex:"ふくい→腹い→腹減った"},
+{q:"読めば読むほど頭がよくなるもの…ではなく、読めない本は？",a:"電話帳",ex:"全部読まない"},
+{q:"「3月1日」を漢字1文字にすると？",a:"春",ex:"三＋一→上が「三」下が「日」→春"},
+{q:"どんなに叩いても痛がらないのに「いたい」と言われるもの",a:"板",ex:"板→いたい"},
+{q:"逆さにすると持てなくなるもの",a:"コップ",ex:"逆さにすると水がこぼれる"},
+{q:"毎日学校に持っていくのに使わないで帰ってくるものは？",a:"名前"},
+{q:"どんなに暗い夜でも明るい人って？",a:"朝日さん（あさひ→明日）",ex:"名前"},
+{q:"時計が怒っている時の時刻は？",a:"1時",ex:"いちじ→いちじ（立腹）→ではなく「怒りの時計→カチカチ」"},
+{q:"上に向かって降るものは？",a:"拍手",ex:"手を上に振る"},
+{q:"月曜日にしか会えない友達は？",a:"ゲッツー",ex:"月→ゲツ"},
+{q:"足がないのに「3足」で売られるものは？",a:"靴下"},
+{q:"窓から見える県は？",a:"窓→まど→愛媛（え「ひめ」）…ではなく「窓からみえる」→三重県",ex:"見え→三重"},
+{q:"世界で一番長い英単語は？（なぞなぞ）",a:"smiles",ex:"最初のsと最後のsの間が1マイル（mile）"},
+{q:"ひっくり返すと固くなる飲み物は？",a:"コーラ",ex:"コーラ→ラーコ→…ではなく「氷→こおり→コオリ」"},
+{q:"割ると気持ちいい食べ物は？",a:"スイカ",ex:"スイカ割り"},
+{q:"お尻が3つある星座は？",a:"オリオン座",ex:"オ「リ」オン→おしり3つ"},
+{q:"食べたくないのに食べさせられる薬は？",a:"目薬",ex:"目に「さす」→刺す"},
+{q:"何を聞いても「知らない」と答える花は？",a:"シラナイ→白菜…ではなく「しらん」→シラン（紫蘭）",ex:"知らん→シラン"},
+{q:"2人で持っても1人で持っても重さが変わらないものは？",a:"体重"},
+{q:"飲めない水は？",a:"香水"},
+{q:"いくら温めても冷たい食べ物は？",a:"アイスクリーム",ex:"いくら温めても名前は「アイス」"},
+{q:"「い」を抜くと怒り出す食べ物は？",a:"いか",ex:"い→抜くと「か！」（怒り）"},
+{q:"クリスマスに会えるお化けは？",a:"サンタクロース",ex:"サンタ→「来る」→お化けも「来る」→ではなく"},
+{q:"消防車が赤い本当の理由は？（なぞなぞ）",a:"火を消しに「赤」→ではなく「火に近いから赤くなった」",ex:"なぞなぞ"},
+{q:"文房具の中で一番年上なのは？",a:"のり",ex:"のり→海苔→ノリ→年長→…"},
+{q:"いつも文句ばっかり言っている動物は？",a:"ブタ",ex:"ブーブー"},
+{q:"朝は4本足、昼は2本足、夜は3本足、これは？",a:"人間",ex:"赤ちゃんのハイハイ→歩く→杖"},
+{q:"電気がなくても使えるパソコンの部品は？",a:"マウス",ex:"マウス＝ネズミ"},
+{q:"「5」と「10」がケンカしたらどっちが勝つ？",a:"5",ex:"5→ご→碁の勝者"},
+{q:"タクシーに乗っている鳥は？",a:"インコ",ex:"「インコ」→「いんこ」→タクシーの運賃メーター…ではなく"},
+{q:"壊れているのに売られているものは？",a:"かいもの→買い物→壊物",ex:""},
+{q:"冬に咲く夏の花は？",a:"ふゆ→冬→「つばき」",ex:"椿→冬の花だけど…ではなく"},
+{q:"10本のうち3本抜くと何本になる？",a:"0本",ex:"「歯」が10本で3本抜くと→…ではなく「と」を抜くと→0本"},
+];
+const O=[
+"小澤さん「バカだろ。」",
+"小澤さん「は？」",
+"小澤さん「終わってんな。」",
+"小澤さん「それで生きていけると思ってんの？」",
+"小澤さん「小学生でも解けるわ。」",
+"小澤さん「脳みそ入ってる？」",
+"小澤さん「親泣いてるぞ。」",
+"小澤さん「恥ずかしくないの？」",
+"小澤さん「生きてて楽しい？」",
+"小澤さん「才能ないわ。」",
+"小澤さん「もう関わりたくない。」",
+"小澤さん「ゴミ。」",
+"小澤さん「やめろ。向いてない。」",
+"小澤さん「存在が不正解。」",
+"小澤さん「お前の人生もタイムオーバーだろ。」",
+"小澤さん「救いようがないわ。」",
+"小澤さん「ウケる。お前が。」",
+"小澤さん「期待してなかったけど、それ以下。」",
+"小澤さん「考えるだけ無駄だったな。」",
+"小澤さん「黙ってろ。」",
+"小澤さん「マジで言ってんの？」",
+"小澤さん「見てるこっちが恥ずかしいわ。」",
+"小澤さん「二度とやるな。」",
+"小澤さん「消えろ。」",
+"小澤さん「頭の中、空っぽだろ。」",
+"小澤さん「お前がなぞなぞだよ。なんで生きてんの？」",
+"小澤さん「無理。お前には無理。」",
+"小澤さん「人類の恥。」",
+"小澤さん「帰れよ。」",
+"小澤さん「なんでまだやってんの？」",
+"小澤さん「反省って言葉知ってる？」",
+"小澤さん「勉強したことないだろ。人生で。」",
+"小澤さん「お前の将来？どうでもいいわ。」",
+"小澤さん「センスゼロ。」",
+"小澤さん「天才の反対がお前。」",
+"小澤さん「生ゴミの方がまだ使えるわ。」",
+"小澤さん「呼吸してるだけ偉いよ。それだけ。」",
+"小澤さん「努力は裏切らないけど、お前は裏切るよな。」",
+"小澤さん「不正解の才能だけはあるな。」",
+"小澤さん「一生解けないわ。」",
+"小澤さん「まだ諦めてないの？往生際悪いな。」",
+"小澤さん「お前の自信、どこ産？」",
+"小澤さん「不正解のデパート。」",
+"小澤さん「その頭、飾りだろ。」",
+"小澤さん「お前に出す問題がもったいないわ。」",
+"小澤さん「義務教育の敗北。」",
+"小澤さん「税金返せ。」",
+"小澤さん「お前に『考える』は早すぎた。」",
+"小澤さん「友達いる？いたら止めてもらえ。」",
+"小澤さん「正解率0%を目指してんの？」",
+"小澤さん「惨め。」",
+"小澤さん「お前がいると平均点下がるわ。」",
+"小澤さん「今すぐやめろ。地球のために。」",
+"小澤さん「もう来るな。」",
+"小澤さん「クソだな。」",
+"小澤さん「これがお前の限界か。知ってた。」",
+"小澤さん「お前の回答、全部外れ。人生も。」",
+"小澤さん「これで社会人？嘘だろ。」",
+"小澤さん「もう寝ろ。起きてる価値ない。」",
+"小澤さん「100点中0点。お前の人生も。」",
+"小澤さん「全問不正解でも驚かないわ。」",
+"小澤さん「頭使え。ついてんだろ一応。」",
+"小澤さん「恥の上塗り。」",
+"小澤さん「底辺。」",
+"小澤さん「まだ落ちんの？底なしだな。」",
+];
+let riddle=null,tmr=600,ti=null,qi=0,oi=null,lo=-1,ans=false;
+function init(){
+document.getElementById('ozawaStack').innerHTML='';
+document.getElementById('overOverlay').classList.remove('show');
+const n=new Date();
+document.getElementById('dateLabel').textContent=`${n.getFullYear()}年${n.getMonth()+1}月${n.getDate()}日のなぞなぞ`;
+const s=new Date(n.getFullYear(),0,0),d=Math.floor((n-s)/864e5);
+riddle=R[d%R.length];
+tmr=600;ans=false;
+if(ti)clearInterval(ti);if(oi)clearInterval(oi);
+upTm();ti=setInterval(tk,1000);oi=setInterval(ozw,20000);
+document.getElementById('qText').textContent=riddle.q;
+document.getElementById('resultArea').innerHTML='';
+qi=Date.now();
+document.getElementById('answerArea').innerHTML=`<div class="input-wrap"><input class="text-input" id="inp" placeholder="答えを入力…" onkeydown="if(event.key==='Enter')sub()"><button class="submit-btn" onclick="sub()">回答する</button></div>`;
+document.getElementById('inp').focus();
+}
+function tk(){tmr--;upTm();if(tmr<=0){clearInterval(ti);clearInterval(oi);showTO();}}
+function upTm(){
+const m=Math.floor(tmr/60),s=tmr%60;
+document.getElementById('timerText').textContent=`残り ${m}:${s.toString().padStart(2,'0')}`;
+const p=(tmr/600)*100,b=document.getElementById('timerBar');
+b.style.width=p+'%';b.className='timer-bar';
+if(tmr<=60)b.classList.add('danger');else if(tmr<=180)b.classList.add('warn');
+}
+function nm(s){return s.replace(/[\s　・、。，．!！?？「」『』（）\(\)\/\-ー～~]/g,'').toLowerCase();}
+function chk(i,a){
+const ni=nm(i),na=nm(a);
+if(!ni)return false;
+if(ni===na)return true;
+if(ni.length>=2&&na.startsWith(ni))return true;
+if(na.length>=2&&ni.startsWith(na))return true;
+// Accept katakana/hiragana equivalence
+const toHira=s=>s.replace(/[\u30A1-\u30F6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+if(toHira(ni)===toHira(na))return true;
+return false;
+}
+function sub(){
+if(ans)return;const inp=document.getElementById('inp'),v=inp.value.trim();
+if(!v)return;ans=true;inp.disabled=true;document.querySelector('.submit-btn').disabled=true;
+clearInterval(ti);clearInterval(oi);
+const el=(Date.now()-qi)/1000,ok=chk(v,riddle.a);
+const g=ok&&el<=20,rs=document.getElementById('resultArea');
+let h='<div class="result">';
+if(ok){
+  h+=`<div class="result-emoji">${g?'🎉':'😊'}</div>`;
+  h+=`<div class="result-label ok">${g?'天才！！':'正解！'}</div>`;
+  h+=`<span class="badge ${g?'genius':'ordinary'}">${g?'天才':'凡人'}</span>`;
+  h+=`<div class="result-time">${el.toFixed(1)}秒で回答</div>`;
+}else{
+  h+=`<div class="result-emoji">😭</div>`;
+  h+=`<div class="result-label ng">不正解…</div>`;
+  h+=`<span class="badge ordinary">凡人</span>`;
+  h+=`<div class="result-answer">正解は <strong>${riddle.a}</strong></div>`;
+}
+if(riddle.ex){h+=`<div class="result-answer" style="margin-top:6px;font-size:.78rem">💡 ${riddle.ex}</div>`;}
+h+='</div>';rs.innerHTML=h;
+}
+function ozw(){
+let i;do{i=Math.floor(Math.random()*O.length);}while(i===lo);lo=i;
+const s=document.getElementById('ozawaStack'),m=document.createElement('div');
+m.className='ozawa-msg';m.textContent=O[i];s.appendChild(m);
+}
+function showTO(){
+document.getElementById('overAnswer').innerHTML=`正解は<br><strong>${riddle.a}</strong>${riddle.ex?'<br><span style="font-size:.8rem;color:#7A756D">💡 '+riddle.ex+'</span>':''}`;
+document.getElementById('overOverlay').classList.add('show');
+}
+init();
+</script>
+</body>
+</html>
